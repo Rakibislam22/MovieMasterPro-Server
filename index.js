@@ -31,6 +31,25 @@ async function run() {
   try {
     await client.connect();
 
+    const db = client.db('movie-master-pro');
+    const userCollection = db.collection('users');
+
+    // users data post
+    app.post('/users', async (res,req) => {
+        const newUser = req.body;
+        const email = newUser.email;
+
+        const query = {email : email};
+        const userExist = await userCollection.findOne(query);
+
+        if(userExist){
+            res.send({message: 'User already exist...!'})
+        }else{
+            const result = userCollection.insertOne(newUsers);
+        }
+    })
+
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
