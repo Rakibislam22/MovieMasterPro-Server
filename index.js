@@ -33,9 +33,10 @@ async function run() {
 
     const db = client.db('movie-master-pro');
     const userCollection = db.collection('users');
+    const moviesCollection = db.collection('movies');
 
     // users data post
-    app.post('/users', async (res,req) => {
+    app.post('/users', async (req,res) => {
         const newUser = req.body;
         const email = newUser.email;
 
@@ -45,8 +46,22 @@ async function run() {
         if(userExist){
             res.send({message: 'User already exist...!'})
         }else{
-            const result = userCollection.insertOne(newUsers);
+            const result = await userCollection.insertOne(newUser);
+            res.send(result);
         }
+    })
+
+    // All movies
+    app.get('/movies',async(req,res) => {
+       const cursor = moviesCollection.find();
+       const result = await cursor.toArray();
+       res.send(result);
+    })
+
+    app.get('/hero-movies',async(req,res) =>{
+      const cursor = moviesCollection.find().limit(5);
+      const result = await cursor.toArray();
+       res.send(result);
     })
 
 
