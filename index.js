@@ -53,17 +53,40 @@ async function run() {
 
     // All movies
     app.get('/movies', async (req, res) => {
-      const { addedBy } = req.query;
+      try {
+        const { addedBy, genres, minRating, maxRating } = req.query;
 
-      const query = {};
+        const filter = {};
 
-      if (addedBy) {
-        query.addedBy = addedBy;
+        // Filter by addedBy
+        if (addedBy) {
+          filter.addedBy = addedBy;
+        }
+
+        // Filter by multiple genres
+        if (genres) {
+          const genreArray = genres.split(",");
+          filter.genre = { $in: genreArray };
+        }
+
+        // Filter by rating range
+        if (minRating || maxRating) {
+          filter.rating = {};
+          if (minRating) filter.rating.$gte = Number(minRating);
+          if (maxRating) filter.rating.$lte = Number(maxRating);
+        }
+
+        const movies = await moviesCollection.find(filter).toArray();
+        res.send(movies);
+
+      } catch (error) {
+        res.status(500).send({
+          error: "Failed to fetch movies",
+          details: error.message
+        });
       }
-
-      const result = await moviesCollection.find(query).toArray();
-      res.send(result);
     });
+
 
     app.get("/stats", async (req, res) => {
       try {
