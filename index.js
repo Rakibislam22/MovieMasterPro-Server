@@ -117,13 +117,40 @@ async function run() {
 
     // delete my collection
 
-    app.delete('/movies/:id', async(req,res) => {
+    app.delete('/movies/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
 
       const result = await moviesCollection.deleteOne(query);
       res.send(result);
     })
+
+    // update movie
+    app.put('/movies/update/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedMovie = req.body;
+
+        // Prevent editing addedBy
+        if (updatedMovie.addedBy) {
+          delete updatedMovie.addedBy;
+        }
+
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = { $set: updatedMovie };
+
+        const result = await moviesCollection.updateOne(query, updateDoc);
+
+        res.send({ success: true, modifiedCount: result.modifiedCount });
+
+      } catch (error) {
+        res.status(500).send({
+          error: "Failed to update movie",
+          details: error.message
+        });
+      }
+    });
+
 
 
 
