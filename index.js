@@ -53,10 +53,17 @@ async function run() {
 
     // All movies
     app.get('/movies', async (req, res) => {
-      const cursor = moviesCollection.find();
-      const result = await cursor.toArray();
+      const { addedBy } = req.query;
+
+      const query = {};
+
+      if (addedBy) {
+        query.addedBy = addedBy;
+      }
+
+      const result = await moviesCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     app.get("/stats", async (req, res) => {
       try {
