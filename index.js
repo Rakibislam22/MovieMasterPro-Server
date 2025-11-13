@@ -34,6 +34,7 @@ async function run() {
     const db = client.db('movie-master-pro');
     const userCollection = db.collection('users');
     const moviesCollection = db.collection('movies');
+    const watchlistCollection = db.collection('watchlist');
 
     // users data post
     app.post('/users', async (req, res) => {
@@ -171,6 +172,87 @@ async function run() {
           error: "Failed to update movie",
           details: error.message
         });
+      }
+    });
+
+    // ADD to Watchlist
+    app.post("/watchlist/add", async (req, res) => {
+      try {
+        const { email, movieId } = req.body;
+
+        if (!email || !movieId) {
+          return res.status(400).send({ error: "Email and movieId are required" });
+        }
+
+        // Prevent duplicate
+        const exists = await watchlistCollection.findOne({
+          email,
+          movieId: new ObjectId(movieId),
+        });
+
+        if (exists) {
+          return res.send({ success: false, message: "Already in watchlist" });
+        }
+
+        const result = await watchlistCollection.insertOne({
+          email,
+          movieId: new ObjectId(movieId),
+          addedAt: new Date(),
+        });
+
+        res.send({ success: true, result });
+
+      } catch (error) {
+        res.status(500).send({ error: error.message });
+      }
+    });
+
+
+    // GET Watchlist Movies
+    app.get("/watchlist", async (req, res) => {
+      try {
+        const email = req.query.email;
+        if (!email) return res.status(400).send({ error: "Email is required" });
+
+        const items = await watchlistCollection
+          .find({ email })
+          .toArray();
+
+        // Now fetch full movie details
+        const movieIds = items.map((i) => new ObjectId(i.movieId));
+
+        const movies = await moviesCollection
+          .find({ _id: { $in: movieIds } })
+          .toArray();
+
+        res.send(movies);
+
+      } catch (error) {
+        res.status(500).send({ error: error.message });
+      }
+    });
+
+    // REMOVE from Watchlist
+    app.delete("/watchlist/remove", async (req, res) => {
+      try {
+        const { email, movieId } = req.body;
+
+        if (!email || !movieId) {
+          return res.status(400).send({ error: "Email and movieId are required" });
+        }
+
+        const result = await watchlistCollection.deleteOne({
+          email,
+          movieId: new ObjectId(movieId),
+        });
+
+        res.send({
+          success: true,
+          deleted: result.deletedCount,
+        });
+
+      } catch (error) {
+        res.status(500).send({ error: error.message });
       }
     });
 
