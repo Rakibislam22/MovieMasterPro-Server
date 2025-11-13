@@ -97,6 +97,18 @@ async function run() {
       res.send(result);
     })
 
+    // add movie
+    app.post('/movies/add', async (req, res) => {
+      try {
+        const newMovie = req.body;
+        const result = await moviesCollection.insertOne(newMovie);
+        res.status(201).send(result);
+      } catch (err) {
+        res.status(500).send({ error: "Failed to add movie", details: err.message });
+      }
+    });
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
