@@ -29,7 +29,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db('movie-master-pro');
     const userCollection = db.collection('users');
@@ -55,13 +55,19 @@ async function run() {
     // All movies
     app.get('/movies', async (req, res) => {
       try {
-        const { addedBy, genres, minRating, maxRating } = req.query;
+        const { addedBy, genres, minRating, maxRating, search } = req.query;
 
         const filter = {};
 
         // Filter by addedBy
         if (addedBy) {
           filter.addedBy = addedBy;
+        }
+
+        // Search by movie title 
+        if (search) {
+          filter.title = { $regex: search, $options: "i" };
+          
         }
 
         // Filter by multiple genres
@@ -87,6 +93,7 @@ async function run() {
         });
       }
     });
+
 
 
     app.get("/stats", async (req, res) => {
